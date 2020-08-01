@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# this script will delete old key and create new ssh key
+# to run this script remotely, follow command like:
+# these are the defaults for the commandline-options
+
+
+#sample command: ssh -i /home/mahesh/.ssh/id_mytestkey mukesh@169.62.172.227 'bash -s' -- < sh.sh
+
+KEYSIZE=2048
+PASSPHRASE=
+FILENAME=~/.ssh/id_mytestkey
+KEYTYPE=rsa
+HOST=host
+USER=${USER}
+
+
+#
+# NO MORE CONFIG SETTING BELOW THIS LINE
+#
+
+function usage() {
+        echo "Specify some parameters, valid ones are:"
+
+    echo "  -u (--user)       <username>, default: ${USER}"
+    echo "  -f (--file)       <file>,     default: ${FILENAME}"
+    echo "  -h (--host)       <hostname>, default: ${HOST}"
+
+    echo "  -p (--port)       <port>,     default: <default ssh port>"
+    echo "  -k (--keysize)    <size>,     default: ${KEYSIZE}"
+    echo "  -t (--keytype)    <type>,     default: ${KEYTYPE}"
+
+    echo "  -P (--passphrase) <key-passphrase>, default: ${PASSPHRASE}"
+    exit 2
+}
+
+#check if cmd are executable
+SSH_KEYGEN=`which ssh-keygen`
+SSH=`which ssh`
+SSH_COPY_ID=`which ssh-copy-id`
+
+if [ -z "$SSH_KEYGEN" ];then
+    echo Could not find the 'ssh-keygen' executable
+    exit 1
+fi
+if [ -z "$SSH" ];then
+    echo Could not find the 'ssh' executable
+    exit 1
+fi
+#make sure right path is set before we delete key
+    echo Deleting old key
+    rm ~/.ssh/id_mytestkey
+    rm ~/.ssh/id_mytestkey.pub
+    echo creating new key
+    $SSH_KEYGEN -t $KEYTYPE -b $KEYSIZE  -f $FILENAME -N "$PASSPHRASE"
+    RET=$?
+    if [ $RET -ne 0 ];then
+        echo ssh-keygen failed: $RET
+        exit 1
+    fi
+   echo here is the public key to add
+   echo ---------------------------------------------
+   echo ---------------------------------------------
+   cat ~/.ssh/id_mytestkey.pub
+echo
+echo Adjust permissions of generated key-files locally
+chmod 0600 ${FILENAME} ${FILENAME}.pub
+RET=$?
+if [ $RET -ne 0 ];then
+    echo chmod failed: $RET
+    exit 1
+fi
+
+echo ------NEW KEY HAS BEEN CREATED--------- 
+${FILENAME}.pub
+${FILENAME}
